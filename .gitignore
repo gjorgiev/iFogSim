@@ -4,5 +4,4 @@ bin/
 .settings/
 .project
 .idea
-out
-output
+out/production/

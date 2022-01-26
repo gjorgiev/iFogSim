@@ -3,4 +3,6 @@ bin/
 .classpath
 .settings/
 .project
-
+.idea
+out
+output

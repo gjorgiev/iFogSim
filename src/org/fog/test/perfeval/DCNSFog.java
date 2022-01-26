@@ -1,10 +1,17 @@
 package org.fog.test.perfeval;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.opencsv.CSVWriter;
 import org.cloudbus.cloudsim.Host;
 import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.Pe;
@@ -69,7 +76,7 @@ public class DCNSFog {
 			application.setUserId(broker.getId());
 			
 			createFogDevices(broker.getId(), appId);
-			
+
 			Controller controller = null;
 			
 			ModuleMapping moduleMapping = ModuleMapping.createModuleMapping(); // initializing a module mapping
@@ -93,7 +100,9 @@ public class DCNSFog {
 							:(new ModulePlacementEdgewards(fogDevices, sensors, actuators, application, moduleMapping)));
 			
 			TimeKeeper.getInstance().setSimulationStartTime(Calendar.getInstance().getTimeInMillis());
-			
+
+			writeToCSVFile();
+
 			CloudSim.startSimulation();
 
 			CloudSim.stopSimulation();
@@ -104,7 +113,50 @@ public class DCNSFog {
 			Log.printLine("Unwanted errors happen");
 		}
 	}
-	
+
+	/**
+	 * Write the result from simulation into CSV file
+	 */
+	private static void writeToCSVFile(){
+		// Added for printing results in .csv files
+		Path root = FileSystems.getDefault().getPath("").toAbsolutePath();
+		Path filePath = Paths.get(root.toString(),"output", "result.csv");
+		File file = new File(String.valueOf(filePath));
+
+		// create FileWriter object with file as parameter
+		FileWriter output_file = null;
+		try {
+			output_file = new FileWriter(file);
+
+			// create CSVWriter object filewriter object as parameter
+			CSVWriter writer = new CSVWriter(output_file);
+
+			// adding header to csv
+			ArrayList<String> header = new ArrayList<>();
+			for(FogDevice device : fogDevices) {
+				header.add(device.getName().toString());
+			}
+			String [] headerArray= header.toArray(new String[0]);
+			writer.writeNext(headerArray);
+
+			// write all the lines into the file
+			ArrayList<String> line = new ArrayList<>();
+			for(FogDevice device : fogDevices) {
+				line.add(String.valueOf(device.getEnergyConsumption()));
+			}
+			String [] lineArray = line.toArray(new String[0]);
+			writer.writeNext(lineArray);
+
+			// closing writer connection
+			writer.close();
+
+			Log.print("Wrote results into CSV file. Location:  " + filePath);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
 	/**
 	 * Creates the fog devices in the physical topology of the simulation.
 	 * @param userId
